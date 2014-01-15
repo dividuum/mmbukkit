@@ -1,9 +1,7 @@
-name: TinyProtocol
-version: 0.0.1-SNAPSHOT
-description: Intercept packets without ProtocolLib
-author: Comphenix
-
+name: MinersMovies
+version: 0.1
+description: Record all the things!
+author: Florian 'dividuum' Wesch
 load: startup
-
-main: com.comphenix.tinyprotocol.ExamplePlugin
+main: com.minersmovies.server.Plugin
 database: false

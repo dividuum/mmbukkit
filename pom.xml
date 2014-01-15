@@ -1,20 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.comphenix.tinyprotocol</groupId>
-  <artifactId>TinyProtocol</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>TinyProtocol</name>
-  <description>Intercept packets without ProtocolLib.</description>
+  <groupId>com.minersmovies.server</groupId>
+  <artifactId>MinersMovies</artifactId>
+  <version>0.1</version>
+  <name>MinersMovies</name>
+  <description>Record all the things!</description>
   
   <repositories>
     <repository>
       <id>bukkit-rep</id>
       <url>http://repo.bukkit.org/content/groups/public</url>
-    </repository>
-    <repository>
-      <id>comphenix-rep</id>
-      <name>Comphenix Maven Releases</name>
-      <url>http://repo.comphenix.net/content/groups/public</url>
     </repository>
   </repositories>
   

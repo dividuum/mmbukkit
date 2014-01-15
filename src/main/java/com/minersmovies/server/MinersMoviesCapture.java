@@ -1,4 +1,4 @@
-package com.comphenix.tinyprotocol;
+package com.minersmovies.server;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,6 +11,7 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.server.v1_7_R1.MinecraftServer;
 import net.minecraft.server.v1_7_R1.NetworkManager;
 import net.minecraft.util.io.netty.buffer.ByteBuf;
 import net.minecraft.util.io.netty.buffer.Unpooled;
@@ -21,12 +22,17 @@ import net.minecraft.util.io.netty.channel.ChannelDuplexHandler;
 import net.minecraft.util.io.netty.channel.ChannelHandlerContext;
 import net.minecraft.util.io.netty.channel.ChannelPromise;
 
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.World.Environment;
+import org.bukkit.craftbukkit.v1_7_R1.CraftServer;
 import org.bukkit.craftbukkit.v1_7_R1.entity.CraftPlayer;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.Plugin;
@@ -47,15 +53,46 @@ public class MinersMoviesCapture implements Listener {
 		MonitoredPlayer(Player player) throws FileNotFoundException, IOException {
 			playerName = player.getPlayerListName();
 			joined = new Date().getTime();
-			stream = new GZIPOutputStream(new FileOutputStream(playerName + "." + joined + ".dump.gz"));
+			stream = new GZIPOutputStream(new FileOutputStream("recording." + joined + "." + playerName + ".miners"));
+//			stream = new GZIPOutputStream(new FileOutputStream(playerName + ".miners"));
 
+			MinecraftServer server = MinecraftServer.getServer();
+
+			int gamemode = player.getGameMode().getValue();
+			boolean hardcore = server.isHardcore();
+			int dimension = player.getWorld().getEnvironment().getId();
+			Location spawn = player.getWorld().getSpawnLocation();
+			int heldItem = player.getInventory().getHeldItemSlot();
+			int entityId = player.getEntityId();
+			int difficulty = player.getWorld().getDifficulty().getValue();
+			
+//			System.out.println(gamemode);
+//			System.out.println(hardcore);
+//			System.out.println(dimension);
+//			System.out.println(spawn);
+//			System.out.println(heldItem);
+//			System.out.println(entityId);
+//			System.out.println(player);
+			
 			// Sorry :-)
-			String recordingInfo = "{" +
+			String meta = "{" +
 				"\"recorded\":" + (joined/1000) + "," +
 				"\"player_ign\":\"" + playerName + "\"," +
-				"\"source_codec\":\"1.7.2\"" + 
+				"\"source_codec\":\"1.7.2\"" + "," +
+				"\"source_format\":\"bukkit\"" +
 			"}";
-			savePacket('M', Unpooled.wrappedBuffer(recordingInfo.getBytes()));
+			savePacket('M', Unpooled.wrappedBuffer(meta.getBytes()));
+				
+			String extra = "{" +
+				"\"gamemode\":" + gamemode + "," +
+				"\"hardcore\":" + hardcore + "," +
+				"\"dimension\":" + dimension + "," +
+				"\"spawn\":{\"x\":" + spawn.getX() + ",\"y\":" + spawn.getY() + ",\"z\":" + spawn.getZ() + "}," +
+				"\"helditem\":" + heldItem + "," +
+				"\"entity_id\":" + entityId + "," +
+				"\"difficulty\":" + difficulty +
+			"}";
+			savePacket('E', Unpooled.wrappedBuffer(extra.getBytes()));
 			
 			System.out.println("Monitoring " + playerName);
 		}
@@ -89,12 +126,6 @@ public class MinersMoviesCapture implements Listener {
 	public MinersMoviesCapture(Plugin plugin) {
 		this.plugin = plugin;
 		this.plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		
-		// Prepare existing players (disabled, makes no sense, since vital 
-		// information is missing in the recording)
-		// for (Player player : plugin.getServer().getOnlinePlayers()) {
-		// 	monitorPlayer(player);
-		// }
 	}
 	
 	@EventHandler
@@ -103,7 +134,7 @@ public class MinersMoviesCapture implements Listener {
 			return;
 		monitorPlayer(e.getPlayer());
 	}
-
+	
 	@EventHandler
 	public final void onPlayerQuit(PlayerQuitEvent e) {
 		if (closed) 
@@ -126,13 +157,15 @@ public class MinersMoviesCapture implements Listener {
 		monitoredPlayers.put(player, monitoredPlayer);
 		
 		// Inject our packet interceptor	
-		getChannel(player).pipeline().addBefore("decoder", getHandlerName(), new ChannelDuplexHandler() {
+		getChannel(player).pipeline().addBefore("splitter", "mm-reader", new ChannelDuplexHandler() {
 			@Override
 			public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 				monitoredPlayer.savePacket('C', (ByteBuf)msg);
 				super.channelRead(ctx, msg);
 			}
-			
+		});
+
+		getChannel(player).pipeline().addBefore("prepender", "mm-writer", new ChannelDuplexHandler() {
 			@Override
 			public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 				monitoredPlayer.savePacket('S', (ByteBuf)msg);
@@ -146,17 +179,15 @@ public class MinersMoviesCapture implements Listener {
 		if (monitoredPlayer == null)
 			return;
 		
-		System.out.println(getChannel(player).pipeline());
-		if (getChannel(player).pipeline().get(getHandlerName()) != null) {
+//		System.out.println(getChannel(player).pipeline());
+		if (getChannel(player).pipeline().get("mm-reader") != null) {
 			// Deregister (not needed when player disconnected but during plugin reload.
-			getChannel(player).pipeline().remove(getHandlerName());
+			getChannel(player).pipeline().remove("mm-reader");
+			getChannel(player).pipeline().remove("mm-writer");
 		}
+		
 		monitoredPlayer.close();
 		monitoredPlayers.remove(monitoredPlayer);
-	}
-
-	private String getHandlerName() {
-		return "tiny-" + plugin.getName();
 	}
 
 	@EventHandler
