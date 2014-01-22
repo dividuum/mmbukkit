@@ -10,6 +10,18 @@ Based on the TinyProtocol Example of https://github.com/aadnk/ProtocolLib
 
     copy target/MinersMovies*.jar into your plugin directory of your bukkit server
 
+## Usage:
+
+    Nothing to do. The plugin starts recording once a player joins and stops when the player
+    quits.
+
+## TODO:
+
+    Explicit starting of recordings:
+
+        Idea: Make the player switch to another dimension and immediatelly back, starting the recording
+        before that happens. So the recording would start with a Respawn Packet. Those should contain
+        enough information to create a replay.
 
 ## Random developer notes:
 
@@ -86,4 +98,3 @@ Based on the TinyProtocol Example of https://github.com/aadnk/ProtocolLib
     /*      */       }
     /*      */     }
     /*      */   }
-    
