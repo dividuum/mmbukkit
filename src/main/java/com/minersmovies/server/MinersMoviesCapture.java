@@ -54,7 +54,6 @@ public class MinersMoviesCapture implements Listener {
 			playerName = player.getPlayerListName();
 			joined = new Date().getTime();
 			stream = new GZIPOutputStream(new FileOutputStream("recording." + joined + "." + playerName + ".miners"));
-//			stream = new GZIPOutputStream(new FileOutputStream(playerName + ".miners"));
 
 			MinecraftServer server = MinecraftServer.getServer();
 
@@ -98,8 +97,6 @@ public class MinersMoviesCapture implements Listener {
 		}
 		
 		public void savePacket(char side, ByteBuf buf) {
-			// System.out.println(buf);
-			// System.out.println(buf.readableBytes());
 			int size = buf.readableBytes();
 			long delta = (new Date().getTime()) - joined;
 			String header = String.format("%012d%012d%c", delta, size, side);
@@ -156,7 +153,7 @@ public class MinersMoviesCapture implements Listener {
 
 		monitoredPlayers.put(player, monitoredPlayer);
 		
-		// Inject our packet interceptor	
+		// Inject our packet interceptor
 		getChannel(player).pipeline().addBefore("splitter", "mm-reader", new ChannelDuplexHandler() {
 			@Override
 			public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -179,9 +176,9 @@ public class MinersMoviesCapture implements Listener {
 		if (monitoredPlayer == null)
 			return;
 		
-//		System.out.println(getChannel(player).pipeline());
+		//System.out.println(getChannel(player).pipeline());
 		if (getChannel(player).pipeline().get("mm-reader") != null) {
-			// Deregister (not needed when player disconnected but during plugin reload.
+			// Deregister (not needed when player disconnected but during plugin reload).
 			getChannel(player).pipeline().remove("mm-reader");
 			getChannel(player).pipeline().remove("mm-writer");
 		}
