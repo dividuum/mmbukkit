@@ -17,7 +17,7 @@ Usage:
 ------
 
 Nothing to do. The plugin starts recording once a player joins and stops when the player
-quits.
+quits. Upload the recording on https://miners-movies.com/upload
 
 TODO:
 -----
